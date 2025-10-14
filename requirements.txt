@@ -4,5 +4,4 @@ psycopg2-binary
 Flask-Migrate
 marshmallow
 marshmallow-sqlalchemy
-Flasgge
 python-dotenv

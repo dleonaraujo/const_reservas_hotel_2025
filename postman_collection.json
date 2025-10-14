@@ -1,0 +1,45 @@
+{
+  "info": {
+    "name": "API Hotel - Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "List Usuarios",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw":"http://localhost:5000/api/usuarios", "protocol":"http","host":["localhost"],"port":"5000","path":["api","usuarios"] }
+      }
+    },
+    {
+      "name": "Crear Usuario",
+      "request": {
+        "method": "POST",
+        "header": [{"key":"Content-Type","value":"application/json"}],
+        "body": {
+          "mode":"raw",
+          "raw": "{\"username\":\"reception\",\"nombre\":\"Recepcionista\",\"role_id\":1}"
+        },
+        "url": { "raw":"http://localhost:5000/api/usuarios","protocol":"http","host":["localhost"],"port":"5000","path":["api","usuarios"] }
+      }
+    },
+    {
+      "name": "Registrar Pago",
+      "request": {
+        "method": "POST",
+        "header": [{"key":"Content-Type","value":"application/json"}],
+        "body": { "mode":"raw","raw":"{\"reserva_id\":1,\"monto\":120.5,\"metodo\":\"tarjeta\"}" },
+        "url": { "raw":"http://localhost:5000/api/pagos/registrar","protocol":"http","host":["localhost"],"port":"5000","path":["api","pagos","registrar"] }
+      }
+    },
+    {
+      "name": "Habitaciones Disponibles",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw":"http://localhost:5000/api/habitaciones/disponibles?start=2025-10-20&end=2025-10-22","protocol":"http","host":["localhost"],"port":"5000","path":["api","habitaciones","disponibles"],"query":[{"key":"start","value":"2025-10-20"},{"key":"end","value":"2025-10-22"}] }
+      }
+    }
+  ]
+}

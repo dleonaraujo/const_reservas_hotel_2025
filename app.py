@@ -3,6 +3,7 @@ from config import SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODIFICATIONS, SWAG
 from models import db
 from flasgger import Swagger
 from routes import api
+from flask_migrate import Migrate   
 
 def create_app():
     app = Flask(__name__)
@@ -11,7 +12,9 @@ def create_app():
     app.config['SWAGGER'] = SWAGGER
 
     db.init_app(app)
-    Swagger(app)  # genera docs en /apidocs
+    Swagger(app)
+
+    Migrate(app, db)   
 
     app.register_blueprint(api)
 
