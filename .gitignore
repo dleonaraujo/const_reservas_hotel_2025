@@ -1,0 +1,53 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# ---- Virtualenv / venv ----
+venv/
+env/
+.venv/
+ENV/
+env.bak/
+pip-wheel-metadata/
+
+# ---- Flask / SQLite / Logs ----
+instance/
+*.log
+*.pid
+*.db
+*.sqlite3
+
+# ---- PyInstaller ----
+build/
+dist/
+*.spec
+
+# ---- Jupyter / IDE ----
+.ipynb_checkpoints/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ---- Migrations ----
+migrations/versions/
+migrations/__pycache__/
+
+# ---- Environment & Config ----
+.env
+.env.local
+.env.*.local
+*.ini
+config.cfg
+settings.cfg
+
+# ---- Postman / Swagger generated ----
+*.postman_collection.json
+openapi.json
+
+# ---- OS cruft ----
+.DS_Store
+Thumbs.db
