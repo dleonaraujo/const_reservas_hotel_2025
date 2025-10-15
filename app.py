@@ -9,11 +9,15 @@ def create_app():
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = SQLALCHEMY_TRACK_MODIFICATIONS
-    app.config['SWAGGER'] = SWAGGER
+    app.config['SWAGGER'] = {
+        'title': 'API Hotel - Sistema de Reservas',
+        'uiversion': 3
+    }
+
+    swagger = Swagger(app)
 
     db.init_app(app)
-    Swagger(app)
-
+    
     Migrate(app, db)   
 
     app.register_blueprint(api)
