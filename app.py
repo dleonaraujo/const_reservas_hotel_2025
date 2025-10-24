@@ -3,7 +3,8 @@ from config import SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODIFICATIONS, SWAG
 from models import db
 from flasgger import Swagger
 from routes import api
-from flask_migrate import Migrate   
+from flask_migrate import Migrate
+from flask_jwt_extended import JWTManager   
 
 def create_app():
     app = Flask(__name__)
@@ -14,11 +15,17 @@ def create_app():
         'uiversion': 3
     }
 
+    app.config['JWT_SECRET_KEY'] = '123456'
+
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 86400
+
     swagger = Swagger(app)
 
     db.init_app(app)
     
-    Migrate(app, db)   
+    Migrate(app, db) 
+
+    jwt = JWTManager(app)  
 
     app.register_blueprint(api)
 
