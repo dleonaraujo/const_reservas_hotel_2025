@@ -1,6 +1,7 @@
 alembic==1.17.0
 attrs==25.4.0
 blinker==1.9.0
+cachetools==6.2.1
 click==8.3.0
 colorama==0.4.6
 flasgger==0.9.7.1
@@ -18,13 +19,17 @@ MarkupSafe==3.0.3
 marshmallow==4.0.1
 marshmallow-sqlalchemy==1.4.2
 mistune==3.1.4
+oauthlib==3.3.1
 packaging==25.0
 psycopg2-binary==2.9.11
+pyasn1==0.6.1
+pyasn1_modules==0.4.2
 PyJWT==2.10.1
 python-dotenv==1.1.1
 PyYAML==6.0.3
 referencing==0.37.0
 rpds-py==0.28.0
+rsa==4.9.1
 six==1.17.0
 SQLAlchemy==2.0.44
 typing_extensions==4.15.0
