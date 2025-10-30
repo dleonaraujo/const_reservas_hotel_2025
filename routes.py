@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from models import db, Usuario, Cliente, Habitacion, Reserva, DetalleReserva, Pago, Servicio, TipoHabitacion
 from flasgger import swag_from
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
@@ -51,6 +51,69 @@ def login():
     # Crear token
     token = create_access_token(identity=str(user.id))
     return jsonify({'ok': True, 'token': token}), 200
+
+@api.route('/login/google')
+def login_google():
+    google_cfg = requests.get(current_app.config["GOOGLE_DISCOVERY_URL"]).json()
+    authorization_endpoint = google_cfg["authorization_endpoint"]
+
+    redirect_uri = url_for("api.callback_google", _external=True)
+
+    return redirect(
+        f"{authorization_endpoint}?client_id={current_app.config['GOOGLE_CLIENT_ID']}"
+        f"&redirect_uri={redirect_uri}"
+        f"&scope=openid%20email%20profile"
+        f"&response_type=code"
+    )
+
+@api.route('/login/google/callback')
+def callback_google():
+    code = request.args.get("code")
+    google_cfg = requests.get(current_app.config["GOOGLE_DISCOVERY_URL"]).json()
+    token_endpoint = google_cfg["token_endpoint"]
+
+    token_data = {
+        "code": code,
+        "client_id": current_app.config["GOOGLE_CLIENT_ID"],
+        "client_secret": current_app.config["GOOGLE_CLIENT_SECRET"],
+        "redirect_uri": url_for("api.callback_google", _external=True),
+        "grant_type": "authorization_code"
+    }
+
+    token_response = requests.post(token_endpoint, data=token_data).json()
+    access_token = token_response.get("access_token")
+
+
+    userinfo_endpoint = google_cfg["userinfo_endpoint"]
+    userinfo = requests.get(userinfo_endpoint, headers={
+        "Authorization": f"Bearer {access_token}"
+    }).json()
+
+    email = userinfo["email"]
+    nombre = userinfo.get("name", "")
+    username = email.split("@")[0]
+
+
+    user = Usuario.query.filter_by(email=email).first()
+    if not user:
+        user = Usuario(username=username, email=email, nombre=nombre)
+        user.password_hash = generate_password_hash("sso_user")  # valor simbólico
+        db.session.add(user)
+        db.session.commit()
+
+    jwt_token = create_access_token(identity=str(user.id))
+
+    return jsonify({
+        "ok": True,
+        "msg": "Inicio de sesión con Google exitoso",
+        "token": jwt_token,
+        "user": {
+            "id": user.id,
+            "nombre": user.nombre,
+            "email": user.email
+        }
+    })
+
 
 # --- CRUD Usuarios ---
 @api.route('/usuarios', methods=['POST'])
