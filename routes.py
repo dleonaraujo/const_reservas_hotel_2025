@@ -1,13 +1,23 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, url_for, redirect
 from models import db, Usuario, Cliente, Habitacion, Reserva, DetalleReserva, Pago, Servicio, TipoHabitacion
 from flasgger import swag_from
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash
 from datetime import datetime
+import requests
+from oauthlib.oauth2 import WebApplicationClient
 
 api = Blueprint('api', __name__, url_prefix='/api')
 
 
+client = None
+
+def init_google_client(app):
+    """Inicializa el cliente de Google OAuth una vez que Flask está listo."""
+    global client
+    client = WebApplicationClient(app.config["GOOGLE_CLIENT_ID"])
+
+# --- LOGIN NORMAL ---
 @api.route('/login', methods=['POST'])
 @swag_from({
     'tags': ['Auth'],
@@ -38,66 +48,85 @@ def login():
     if not password or (not email and not username):
         return jsonify({'ok': False, 'msg': 'Se requiere email o username y contraseña'}), 400
 
-    # Buscar por email o username
-    user = None
-    if email:
-        user = Usuario.query.filter_by(email=email).first()
-    elif username:
-        user = Usuario.query.filter_by(username=username).first()
+    user = Usuario.query.filter_by(email=email).first() if email else Usuario.query.filter_by(username=username).first()
 
     if not user or not user.check_password(password):
         return jsonify({'ok': False, 'msg': 'Credenciales inválidas'}), 401
 
-    # Crear token
     token = create_access_token(identity=str(user.id))
     return jsonify({'ok': True, 'token': token}), 200
 
+
+# --- LOGIN GOOGLE ---
 @api.route('/login/google')
 def login_google():
-    google_cfg = requests.get(current_app.config["GOOGLE_DISCOVERY_URL"]).json()
+    if not client:
+        return jsonify({"error": "Cliente OAuth no inicializado"}), 500
+
+    resp = requests.get(current_app.config["GOOGLE_DISCOVERY_URL"])
+    if resp.status_code != 200:
+        return jsonify({
+            "error": "No se pudo obtener la configuración de Google",
+            "status_code": resp.status_code,
+            "text": resp.text
+        }), 500
+
+    google_cfg = resp.json()
     authorization_endpoint = google_cfg["authorization_endpoint"]
 
     redirect_uri = url_for("api.callback_google", _external=True)
-
-    return redirect(
-        f"{authorization_endpoint}?client_id={current_app.config['GOOGLE_CLIENT_ID']}"
-        f"&redirect_uri={redirect_uri}"
-        f"&scope=openid%20email%20profile"
-        f"&response_type=code"
+    print(url_for("api.callback_google", _external=True))
+    request_uri = client.prepare_request_uri(
+        authorization_endpoint,
+        redirect_uri=redirect_uri,
+        scope=["openid", "email", "profile"]
     )
+
+    return redirect(request_uri)
+
 
 @api.route('/login/google/callback')
 def callback_google():
+    if not client:
+        return jsonify({"error": "Cliente OAuth no inicializado"}), 500
+
     code = request.args.get("code")
+
     google_cfg = requests.get(current_app.config["GOOGLE_DISCOVERY_URL"]).json()
     token_endpoint = google_cfg["token_endpoint"]
 
-    token_data = {
-        "code": code,
-        "client_id": current_app.config["GOOGLE_CLIENT_ID"],
-        "client_secret": current_app.config["GOOGLE_CLIENT_SECRET"],
-        "redirect_uri": url_for("api.callback_google", _external=True),
-        "grant_type": "authorization_code"
-    }
+    token_url, headers, body = client.prepare_token_request(
+        token_endpoint,
+        authorization_response=request.url,
+        redirect_url=request.base_url,
+        code=code
+    )
 
-    token_response = requests.post(token_endpoint, data=token_data).json()
-    access_token = token_response.get("access_token")
+    token_response = requests.post(
+        token_url,
+        headers=headers,
+        data=body,
+        auth=(current_app.config["GOOGLE_CLIENT_ID"], current_app.config["GOOGLE_CLIENT_SECRET"]),
+    )
 
+    client.parse_request_body_response(token_response.text)
 
     userinfo_endpoint = google_cfg["userinfo_endpoint"]
-    userinfo = requests.get(userinfo_endpoint, headers={
-        "Authorization": f"Bearer {access_token}"
-    }).json()
+    uri, headers, body = client.add_token(userinfo_endpoint)
+    userinfo_response = requests.get(uri, headers=headers, data=body)
 
-    email = userinfo["email"]
-    nombre = userinfo.get("name", "")
+    if not userinfo_response.ok:
+        return jsonify({"error": "No se pudo obtener información del usuario"}), 400
+
+    user_data = userinfo_response.json()
+    email = user_data.get("email")
+    nombre = user_data.get("name", "")
     username = email.split("@")[0]
-
 
     user = Usuario.query.filter_by(email=email).first()
     if not user:
         user = Usuario(username=username, email=email, nombre=nombre)
-        user.password_hash = generate_password_hash("sso_user")  # valor simbólico
+        user.password_hash = generate_password_hash("sso_user")
         db.session.add(user)
         db.session.commit()
 
@@ -113,6 +142,7 @@ def callback_google():
             "email": user.email
         }
     })
+
 
 
 # --- CRUD Usuarios ---
