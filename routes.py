@@ -10,6 +10,8 @@ from oauthlib.oauth2 import WebApplicationClient
 api = Blueprint('api', __name__, url_prefix='/api')
 
 
+
+
 client = None
 
 def init_google_client(app):
