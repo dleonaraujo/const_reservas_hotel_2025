@@ -1,4 +1,1 @@
-from app import app
-
-# Vercel usa esta variable como entrypoint
-application = app
+from app import app as application
