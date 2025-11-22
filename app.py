@@ -1,4 +1,5 @@
 from flask import Flask, jsonify
+from flask_cors import CORS
 from config import (
     SQLALCHEMY_DATABASE_URI,
     SQLALCHEMY_TRACK_MODIFICATIONS,
@@ -9,63 +10,59 @@ from config import (
 )
 from models import db
 from flasgger import Swagger
-
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
-
 from routes.auth_routes import auth_bp, init_google_client
 from routes.usuarios_routes import usuarios_bp
 from routes.habitaciones_routes import habitaciones_bp
 from routes.reservas_routes import reservas_bp
 from routes.reportes_routes import reportes_bp
+from routes.servicios_routes import servicios_bp
+from routes.clientes_routes import clientes_bp
+import os
 
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 def create_app():
     app = Flask(__name__)
-
-    # Config DB
     app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = SQLALCHEMY_TRACK_MODIFICATIONS
-
-    # Swagger
     app.config['SWAGGER'] = SWAGGER
-
-    # JWT
     app.config['JWT_SECRET_KEY'] = '123456'
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 86400
-
-    # Google OAuth
     app.config['GOOGLE_CLIENT_ID'] = GOOGLE_CLIENT_ID
     app.config['GOOGLE_CLIENT_SECRET'] = GOOGLE_CLIENT_SECRET
     app.config['GOOGLE_DISCOVERY_URL'] = GOOGLE_DISCOVERY_URL
 
-    # Extensiones
-    Swagger(app)
+    # Permitir frontend
+    CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
+
+    # Inicializa extensiones
+    swagger = Swagger(app)
     db.init_app(app)
     Migrate(app, db)
-    JWTManager(app)
+    jwt = JWTManager(app)
 
-    # Google OAuth init (protegido)
-    try:
-        init_google_client(app)
-    except Exception as e:
-        print("⚠ Error inicializando Google OAuth:", e)
+    init_google_client(app)
 
-    # Rutas
+    # Registra rutas
     app.register_blueprint(auth_bp)
     app.register_blueprint(usuarios_bp)
     app.register_blueprint(habitaciones_bp)
     app.register_blueprint(reservas_bp)
     app.register_blueprint(reportes_bp)
+    app.register_blueprint(servicios_bp)
+    app.register_blueprint(clientes_bp)
 
     @app.route('/')
     def home():
         return jsonify({
             "ok": True,
-            "message": "API Hotel running on Render. Visita /apidocs para Swagger UI"
+            "message": "API Hotel running. Visita /apidocs para Swagger UI"
         })
 
     return app
 
-
-app = create_app()
+if __name__ == '__main__':
+    app = create_app()
+    app.run(debug=True, host='0.0.0.0', port=5000)
