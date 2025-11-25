@@ -19,6 +19,7 @@ from routes.reservas_routes import reservas_bp
 from routes.reportes_routes import reportes_bp
 from routes.servicios_routes import servicios_bp
 from routes.clientes_routes import clientes_bp
+from routes.tipo_habitacion_routes import tipo_habitacion_bp
 import os
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
@@ -35,7 +36,13 @@ def create_app():
     app.config['GOOGLE_DISCOVERY_URL'] = GOOGLE_DISCOVERY_URL
 
     # Permitir frontend
+    
+    # DESCOMENTAR LA SIGUIENTE LINEA PARA USAR EN PRODUCCION
     CORS(app, origins=["https://const-reservas-hotel-front-2025.vercel.app"], supports_credentials=True)
+
+    # DESCOMENTAR LA SIGUIENTE LINEA PARA USAR EN LOCAL
+    # CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
+    
 
     # Inicializa extensiones
     swagger = Swagger(app)
@@ -53,6 +60,7 @@ def create_app():
     app.register_blueprint(reportes_bp)
     app.register_blueprint(servicios_bp)
     app.register_blueprint(clientes_bp)
+    app.register_blueprint(tipo_habitacion_bp)
 
     @app.route('/')
     def home():

@@ -46,6 +46,7 @@ class Cliente(db.Model):
     nombre = db.Column(db.String(120))
     email = db.Column(db.String(120), unique=True)
     telefono = db.Column(db.String(30))
+    dni = db.Column(db.String(20), unique=True)
 
 class Empleado(db.Model):
     __tablename__ = 'empleados'
