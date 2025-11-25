@@ -35,7 +35,7 @@ def create_app():
     app.config['GOOGLE_DISCOVERY_URL'] = GOOGLE_DISCOVERY_URL
 
     # Permitir frontend
-    CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
+    CORS(app, origins=["https://const-reservas-hotel-front-2025.vercel.app"], supports_credentials=True)
 
     # Inicializa extensiones
     swagger = Swagger(app)
