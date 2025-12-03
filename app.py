@@ -34,14 +34,16 @@ def create_app():
     app.config['GOOGLE_CLIENT_ID'] = GOOGLE_CLIENT_ID
     app.config['GOOGLE_CLIENT_SECRET'] = GOOGLE_CLIENT_SECRET
     app.config['GOOGLE_DISCOVERY_URL'] = GOOGLE_DISCOVERY_URL
+    # En tu config.py o donde configures la app
+    app.config["FRONTEND_URL"] = "http://localhost:5173"  # O tu URL de producción  
 
     # Permitir frontend
     
     # DESCOMENTAR LA SIGUIENTE LINEA PARA USAR EN PRODUCCION
-    CORS(app, origins=["https://const-reservas-hotel-front-2025.vercel.app"], supports_credentials=True)
+    # CORS(app, origins=["https://const-reservas-hotel-front-2025.vercel.app"], supports_credentials=True)
 
     # DESCOMENTAR LA SIGUIENTE LINEA PARA USAR EN LOCAL
-    # CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
+    CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
     
 
     # Inicializa extensiones

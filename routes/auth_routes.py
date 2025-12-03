@@ -94,7 +94,8 @@ def callback_google():
     userinfo_response = requests.get(uri, headers=headers, data=body)
 
     if not userinfo_response.ok:
-        return jsonify({"error": "No se pudo obtener info del usuario"}), 400
+        frontend_url = current_app.config.get("FRONTEND_URL", "http://localhost:5173")
+        return redirect(f"{frontend_url}/?error=auth_failed")
 
     user_data = userinfo_response.json()
     email = user_data.get("email")
@@ -110,13 +111,22 @@ def callback_google():
 
     jwt_token = create_access_token(identity=str(user.id))
 
-    return jsonify({
-        "ok": True,
-        "msg": "Inicio de sesión con Google exitoso",
+    from urllib.parse import urlencode
+    import json
+    
+    frontend_url = current_app.config.get("FRONTEND_URL", "http://localhost:5173")
+    
+    user_json = {
+        "id": user.id,
+        "nombre": user.nombre,
+        "email": user.email
+    }
+    
+    params = {
         "token": jwt_token,
-        "user": {
-            "id": user.id,
-            "nombre": user.nombre,
-            "email": user.email
-        }
-    })
+        "user": json.dumps(user_json)
+    }
+    
+    # Redirigir a la ruta de callback dedicada
+    return redirect(f"{frontend_url}/auth/callback?{urlencode(params)}")
+
