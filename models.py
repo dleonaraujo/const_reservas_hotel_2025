@@ -65,6 +65,7 @@ class TipoHabitacion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(80))
     descripcion = db.Column(db.String(255))
+    activo = db.Column(db.Boolean, default=True, nullable=False)
 
 class Habitacion(db.Model):
     __tablename__ = 'habitaciones'

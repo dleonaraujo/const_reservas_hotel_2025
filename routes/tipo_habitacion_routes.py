@@ -11,11 +11,13 @@ tipo_habitacion_bp = Blueprint("tipo_habitacion_bp", __name__, url_prefix="/api/
 @tipo_habitacion_bp.route('/', methods=['GET'])
 @jwt_required()
 def listar_tipos():
-    tipos = TipoHabitacion.query.all()
+    # Solo tipos activos
+    tipos = TipoHabitacion.query.filter_by(activo=True).all()
     out = [{
         "id": t.id,
         "nombre": t.nombre,
-        "descripcion": t.descripcion
+        "descripcion": t.descripcion,
+        "activo": t.activo
     } for t in tipos]
     return jsonify(out), 200
 
@@ -30,7 +32,8 @@ def crear_tipo():
 
     nuevo = TipoHabitacion(
         nombre=data.get('nombre'),
-        descripcion=data.get('descripcion')
+        descripcion=data.get('descripcion'),
+        activo=True
     )
 
     db.session.add(nuevo)
@@ -45,7 +48,7 @@ def crear_tipo():
 @tipo_habitacion_bp.route('/<int:id>', methods=['PUT'])
 @jwt_required()
 def actualizar_tipo(id):
-    tipo = TipoHabitacion.query.get(id)
+    tipo = TipoHabitacion.query.filter_by(id=id, activo=True).first()
 
     if not tipo:
         return jsonify({"msg": "Tipo no encontrado"}), 404
@@ -60,17 +63,18 @@ def actualizar_tipo(id):
 
 
 # ===============================
-# ELIMINAR TIPO DE HABITACIÓN
+# ELIMINAR TIPO DE HABITACIÓN (LÓGICO)
 # ===============================
 @tipo_habitacion_bp.route('/<int:id>', methods=['DELETE'])
 @jwt_required()
 def eliminar_tipo(id):
-    tipo = TipoHabitacion.query.get(id)
+    tipo = TipoHabitacion.query.filter_by(id=id, activo=True).first()
 
     if not tipo:
         return jsonify({"msg": "Tipo no encontrado"}), 404
 
-    db.session.delete(tipo)
+    # Eliminación lógica
+    tipo.activo = False
     db.session.commit()
 
     return jsonify({"msg": "Tipo eliminado"}), 200
